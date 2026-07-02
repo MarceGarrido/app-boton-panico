@@ -237,7 +237,8 @@ async function ejecutarAlertaPanico() {
 
     } catch (errorRed) {
       console.error('❌ Error al enviar alerta:', errorRed);
-      mostrarFeedback('❌ Error de conexión. Intentá de nuevo.', 'error');
+      mostrarFeedback('❌ Error de conexión', 'error');
+      alert('Detalle del error: ' + errorRed.message);
     }
   }
 
@@ -398,7 +399,7 @@ async function enviarATelegram(mensaje) {
   if (!respuesta.ok) {
     const errorData = await respuesta.json().catch(() => ({}));
     console.error('❌ Error de Telegram API:', errorData);
-    throw new Error(`Error de Telegram: ${respuesta.status}`);
+    throw new Error(`Telegram error ${respuesta.status}: ${errorData.description || 'Desconocido'}`);
   }
 
   const data = await respuesta.json();
