@@ -5,12 +5,13 @@
 // =============================================
 
 // -----------------------------------------
-//  ⚠️ CONFIGURACIÓN DE TELEGRAM
-//  Completá estos valores con tu Bot Token
-//  y el Chat ID del grupo de Telegram.
+//  CLAVES DE ALMACENAMIENTO PARA TELEGRAM
+//  Las credenciales se configuran desde la
+//  pantalla de ajustes y se guardan en
+//  localStorage (nunca en el código fuente).
 // -----------------------------------------
-const BOT_TOKEN = '';   // Ej: '123456789:ABCdefGhIjKlMnOpQrStUvWxYz'
-const CHAT_ID   = '';   // Ej: '-1001234567890'
+const CLAVE_BOT_TOKEN = 'telegramBotToken';
+const CLAVE_CHAT_ID   = 'telegramChatId';
 
 // -----------------------------------------
 //  CONSTANTES DE LA APLICACIÓN
@@ -28,6 +29,9 @@ const pantallaPrincipal = document.getElementById('pantalla-principal');
 const formulario        = document.getElementById('formulario-registro');
 const inputNombre       = document.getElementById('input-nombre');
 const inputDireccion    = document.getElementById('input-direccion');
+const inputBotToken     = document.getElementById('input-bot-token');
+const inputChatId       = document.getElementById('input-chat-id');
+const configTelegram    = document.getElementById('config-telegram');
 const btnPanico         = document.getElementById('btn-panico');
 const btnAjustes        = document.getElementById('btn-ajustes');
 const displayNombre     = document.getElementById('display-nombre');
@@ -86,9 +90,18 @@ function mostrarPantallaRegistro() {
   // Precargar datos existentes si los hay (modo edición)
   const nombreExistente    = localStorage.getItem(CLAVE_NOMBRE);
   const direccionExistente = localStorage.getItem(CLAVE_DIRECCION);
+  const tokenExistente     = localStorage.getItem(CLAVE_BOT_TOKEN);
+  const chatIdExistente    = localStorage.getItem(CLAVE_CHAT_ID);
 
   if (nombreExistente)    inputNombre.value    = nombreExistente;
   if (direccionExistente) inputDireccion.value = direccionExistente;
+  if (tokenExistente)     inputBotToken.value  = tokenExistente;
+  if (chatIdExistente)    inputChatId.value    = chatIdExistente;
+
+  // Si ya hay credenciales de Telegram, abrir el acordeón
+  if (tokenExistente || chatIdExistente) {
+    configTelegram.setAttribute('open', '');
+  }
 
   // Cambiar visibilidad de pantallas
   pantallaPrincipal.classList.add('oculto');
@@ -126,8 +139,10 @@ formulario.addEventListener('submit', (evento) => {
 
   const nombre    = inputNombre.value.trim();
   const direccion = inputDireccion.value.trim();
+  const botToken  = inputBotToken.value.trim();
+  const chatId    = inputChatId.value.trim();
 
-  // Validación básica
+  // Validación básica de nombre y dirección
   if (!nombre || !direccion) {
     // Sacudir el formulario si los campos están vacíos
     formulario.style.animation = 'none';
@@ -136,9 +151,13 @@ formulario.addEventListener('submit', (evento) => {
     return;
   }
 
-  // Guardar en localStorage
+  // Guardar datos del usuario en localStorage
   localStorage.setItem(CLAVE_NOMBRE, nombre);
   localStorage.setItem(CLAVE_DIRECCION, direccion);
+
+  // Guardar credenciales de Telegram (si se proporcionaron)
+  if (botToken) localStorage.setItem(CLAVE_BOT_TOKEN, botToken);
+  if (chatId)   localStorage.setItem(CLAVE_CHAT_ID, chatId);
 
   // Ir a la pantalla principal
   mostrarPantallaPrincipal(nombre, direccion);
@@ -350,13 +369,17 @@ function obtenerFechaHoraFormateada() {
  * @param {string} mensaje - Texto del mensaje (con formato Markdown).
  */
 async function enviarATelegram(mensaje) {
+  // Leer credenciales desde localStorage
+  const botToken = localStorage.getItem(CLAVE_BOT_TOKEN);
+  const chatId   = localStorage.getItem(CLAVE_CHAT_ID);
+
   // Validar que las credenciales estén configuradas
-  if (!BOT_TOKEN || !CHAT_ID) {
-    console.error('❌ BOT_TOKEN o CHAT_ID no configurados.');
-    throw new Error('Credenciales de Telegram no configuradas.');
+  if (!botToken || !chatId) {
+    console.error('❌ Bot Token o Chat ID no configurados.');
+    throw new Error('Credenciales de Telegram no configuradas. Configurá el Bot Token y Chat ID en Ajustes.');
   }
 
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
   const respuesta = await fetch(url, {
     method: 'POST',
@@ -364,7 +387,7 @@ async function enviarATelegram(mensaje) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      chat_id: CHAT_ID,
+      chat_id: chatId,
       text: mensaje,
       parse_mode: 'Markdown',
       disable_web_page_preview: false

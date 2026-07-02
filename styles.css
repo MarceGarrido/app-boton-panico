@@ -260,6 +260,110 @@ input, select, textarea {
 }
 
 /* ============================================= */
+/*  SECCIÓN DE CONFIGURACIÓN DE TELEGRAM          */
+/* ============================================= */
+
+/* Separador visual */
+.separador-config {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+  margin: var(--espaciado-sm) 0;
+}
+
+.separador-linea {
+  flex: 1;
+  height: 1px;
+  background: var(--color-borde);
+}
+
+.separador-texto {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* Acordeón colapsable (details/summary) */
+.config-telegram {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  background: var(--color-superficie);
+  overflow: hidden;
+  transition: border-color var(--transicion-rapida);
+}
+
+.config-telegram[open] {
+  border-color: var(--color-borde-activo);
+}
+
+.config-telegram-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+  padding: 12px 16px;
+  font-family: var(--fuente-principal);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: color var(--transicion-rapida);
+}
+
+/* Ocultar el marcador por defecto de <summary> */
+.config-telegram-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.config-telegram-toggle:hover {
+  color: var(--color-texto);
+}
+
+/* Chevron que rota al abrir */
+.config-chevron {
+  margin-left: auto;
+  transition: transform var(--transicion-media);
+}
+
+.config-telegram[open] .config-chevron {
+  transform: rotate(180deg);
+}
+
+/* Contenido del acordeón */
+.config-telegram-campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-md);
+  padding: 0 16px 16px;
+}
+
+/* Input monoespaciado para tokens */
+.campo-input-mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+}
+
+/* Texto de ayuda */
+.config-ayuda {
+  font-size: 0.75rem;
+  color: var(--color-texto-tenue);
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: rgba(110, 110, 255, 0.05);
+  border-radius: var(--radio-sm);
+  border-left: 2px solid rgba(110, 110, 255, 0.3);
+}
+
+.config-ayuda strong {
+  color: var(--color-primario);
+}
+
+/* ============================================= */
 /*  PANTALLA PRINCIPAL - BOTÓN DE PÁNICO          */
 /* ============================================= */
 #pantalla-principal {
