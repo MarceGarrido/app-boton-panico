@@ -624,6 +624,11 @@ input, select, textarea {
     linear-gradient(145deg, #ff6b85, #e0224a);
 }
 
+.btn-panico.enviando .btn-panico-texto {
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+}
+
 @keyframes pulsando {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(0.96); }
