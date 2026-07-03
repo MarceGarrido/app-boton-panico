@@ -5,7 +5,7 @@
 // =============================================
 
 // Nombre de la caché (cambiar versión para forzar actualización)
-const CACHE_NAME = 'boton-panico-v4';
+const CACHE_NAME = 'boton-panico-v5';
 
 // Recursos a cachear para uso offline
 const RECURSOS_A_CACHEAR = [

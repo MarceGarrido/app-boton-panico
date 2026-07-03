@@ -18,6 +18,7 @@ const CLAVE_CHAT_ID   = 'telegramChatId';
 // -----------------------------------------
 const CLAVE_NOMBRE    = 'nombreUsuario';
 const CLAVE_DIRECCION = 'direccionRegistrada';
+const CLAVE_TELEFONO  = 'telefonoContacto';
 const DURACION_FEEDBACK = 5000; // 5 segundos para el mensaje de feedback
 const TIMEOUT_GPS = 15000;      // 15 segundos de timeout para GPS
 
@@ -29,6 +30,7 @@ const pantallaPrincipal = document.getElementById('pantalla-principal');
 const formulario        = document.getElementById('formulario-registro');
 const inputNombre       = document.getElementById('input-nombre');
 const inputDireccion    = document.getElementById('input-direccion');
+const inputTelefono     = document.getElementById('input-telefono');
 const inputBotToken     = document.getElementById('input-bot-token');
 const inputChatId       = document.getElementById('input-chat-id');
 const configTelegram    = document.getElementById('config-telegram');
@@ -36,6 +38,7 @@ const btnPanico         = document.getElementById('btn-panico');
 const btnAjustes        = document.getElementById('btn-ajustes');
 const displayNombre     = document.getElementById('display-nombre');
 const displayDireccion  = document.getElementById('display-direccion');
+const displayTelefono   = document.getElementById('display-telefono');
 const feedbackDiv       = document.getElementById('feedback');
 const feedbackTexto     = document.getElementById('feedback-texto');
 
@@ -90,11 +93,13 @@ function mostrarPantallaRegistro() {
   // Precargar datos existentes si los hay (modo edición)
   const nombreExistente    = localStorage.getItem(CLAVE_NOMBRE);
   const direccionExistente = localStorage.getItem(CLAVE_DIRECCION);
+  const telefonoExistente  = localStorage.getItem(CLAVE_TELEFONO);
   const tokenExistente     = localStorage.getItem(CLAVE_BOT_TOKEN);
   const chatIdExistente    = localStorage.getItem(CLAVE_CHAT_ID);
 
   if (nombreExistente)    inputNombre.value    = nombreExistente;
   if (direccionExistente) inputDireccion.value = direccionExistente;
+  if (telefonoExistente)  inputTelefono.value  = telefonoExistente;
   if (tokenExistente)     inputBotToken.value  = tokenExistente;
   if (chatIdExistente)    inputChatId.value    = chatIdExistente;
 
@@ -112,18 +117,18 @@ function mostrarPantallaRegistro() {
 }
 
 /**
- * Muestra la pantalla principal con el botón de pánico.
- * @param {string} nombre - Nombre o comercio del usuario.
- * @param {string} direccion - Dirección registrada.
+ * Oculta el registro y muestra el botón de pánico grande.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} direccion - Dirección del usuario.
+ * @param {string} telefono - Teléfono del usuario.
  */
-function mostrarPantallaPrincipal(nombre, direccion) {
-  // Actualizar la información visible
-  displayNombre.textContent    = nombre;
-  displayDireccion.textContent = direccion;
-
-  // Cambiar visibilidad de pantallas
+function mostrarPantallaPrincipal(nombre, direccion, telefono) {
   pantallaRegistro.classList.add('oculto');
   pantallaPrincipal.classList.remove('oculto');
+
+  displayNombre.textContent = nombre;
+  displayDireccion.textContent = direccion;
+  displayTelefono.textContent = telefono || localStorage.getItem(CLAVE_TELEFONO) || 'Sin teléfono';
 }
 
 // -----------------------------------------
@@ -139,28 +144,29 @@ formulario.addEventListener('submit', (evento) => {
 
   const nombre    = inputNombre.value.trim();
   const direccion = inputDireccion.value.trim();
+  const telefono  = inputTelefono.value.trim();
   const botToken  = inputBotToken.value.trim();
   const chatId    = inputChatId.value.trim();
 
-  // Validación básica de nombre y dirección
-  if (!nombre || !direccion) {
+  // Validación básica de nombre, dirección y teléfono
+  if (!nombre || !direccion || !telefono) {
     // Sacudir el formulario si los campos están vacíos
     formulario.style.animation = 'none';
-    formulario.offsetHeight; // Forzar reflow
-    formulario.style.animation = 'sacudir 0.4s ease';
+    setTimeout(() => formulario.style.animation = 'sacudir 0.4s ease', 10);
     return;
   }
 
   // Guardar datos del usuario en localStorage
   localStorage.setItem(CLAVE_NOMBRE, nombre);
   localStorage.setItem(CLAVE_DIRECCION, direccion);
+  localStorage.setItem(CLAVE_TELEFONO, telefono);
 
   // Guardar credenciales de Telegram (si se proporcionaron)
   if (botToken) localStorage.setItem(CLAVE_BOT_TOKEN, botToken);
   if (chatId)   localStorage.setItem(CLAVE_CHAT_ID, chatId);
 
   // Ir a la pantalla principal
-  mostrarPantallaPrincipal(nombre, direccion);
+  mostrarPantallaPrincipal(nombre, direccion, telefono);
 });
 
 /**
@@ -210,13 +216,14 @@ async function ejecutarAlertaPanico() {
   // Obtener datos del usuario
   const nombre    = localStorage.getItem(CLAVE_NOMBRE)    || 'Sin nombre';
   const direccion = localStorage.getItem(CLAVE_DIRECCION) || 'Sin dirección';
+  const telefono  = localStorage.getItem(CLAVE_TELEFONO)  || 'No especificado';
 
   try {
     // Intentar obtener coordenadas GPS
     const coordenadas = await obtenerUbicacion();
 
     // Armar mensaje CON ubicación GPS
-    const mensaje = armarMensajeConGPS(nombre, direccion, coordenadas);
+    const mensaje = armarMensajeConGPS(nombre, direccion, telefono, coordenadas);
 
     // Enviar a Telegram
     await enviarATelegram(mensaje);
@@ -228,7 +235,7 @@ async function ejecutarAlertaPanico() {
     console.warn('⚠️ GPS no disponible:', errorGPS.message);
 
     // Armar mensaje SIN ubicación GPS
-    const mensajeSinGPS = armarMensajeSinGPS(nombre, direccion);
+    const mensajeSinGPS = armarMensajeSinGPS(nombre, direccion, telefono);
 
     try {
       // Enviar alerta SIN GPS a Telegram
@@ -304,23 +311,26 @@ function obtenerUbicacion() {
 // -----------------------------------------
 
 /**
- * Arma el mensaje de alerta CON coordenadas GPS.
- * Incluye enlace a Google Maps.
+ * Construye el mensaje de alerta incluyendo enlace a Google Maps.
+ * @param {string} nombre 
+ * @param {string} direccion 
+ * @param {string} telefono 
+ * @param {{lat: number, lon: number}} coordenadas 
+ * @returns {string} Mensaje formateado en Markdown.
  */
-function armarMensajeConGPS(nombre, direccion, coordenadas) {
-  const enlaceMaps = `https://www.google.com/maps?q=${coordenadas.lat},${coordenadas.lon}`;
+function armarMensajeConGPS(nombre, direccion, telefono, coordenadas) {
+  const mapUrl = `https://www.google.com/maps?q=${coordenadas.lat},${coordenadas.lon}`;
+  
+  return `🚨 *¡ALERTA DE PÁNICO!* 🚨
 
-  return `🚨🚨🚨 *ALERTA DE PÁNICO* 🚨🚨🚨
+👤 *Comercio / Nombre:* ${nombre}
+📍 *Dirección:* ${direccion}
+📞 *Teléfono:* ${telefono}
 
-⚠️ *Se ha activado una alerta de emergencia*
+🗺️ *Ubicación GPS:*
+[Abrir en Google Maps](${mapUrl})
 
-👤 *Nombre/Comercio:* ${nombre}
-📍 *Dirección Registrada:* ${direccion}
-
-🗺️ *Ubicación GPS en tiempo real:*
-[📌 Ver en Google Maps](${enlaceMaps})
-
-🕐 *Hora:* ${obtenerFechaHoraFormateada()}
+⏰ *Hora de activación:* ${obtenerFechaHoraFormateada()}
 
 _Por favor, verificar la situación de inmediato._`;
 }
@@ -329,13 +339,14 @@ _Por favor, verificar la situación de inmediato._`;
  * Arma el mensaje de alerta SIN coordenadas GPS.
  * Aclara que el GPS no estaba disponible.
  */
-function armarMensajeSinGPS(nombre, direccion) {
+function armarMensajeSinGPS(nombre, direccion, telefono) {
   return `🚨🚨🚨 *ALERTA DE PÁNICO* 🚨🚨🚨
 
 ⚠️ *Se ha activado una alerta de emergencia*
 
 👤 *Nombre/Comercio:* ${nombre}
 📍 *Dirección Registrada:* ${direccion}
+📞 *Teléfono:* ${telefono}
 
 📡 *GPS:* ❌ _No disponible al momento de la alerta._
 _Dirigirse a la dirección registrada._

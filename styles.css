@@ -452,19 +452,22 @@ input, select, textarea {
 }
 
 .info-nombre {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--color-texto);
   margin-bottom: 4px;
 }
 
 .info-direccion {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--color-texto-secundario);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.info-telefono {
+  font-size: 0.9rem;
+  color: var(--color-primario);
+  font-weight: 500;
 }
 
 .info-direccion::before {
