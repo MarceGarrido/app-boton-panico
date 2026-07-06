@@ -250,18 +250,8 @@ async function ejecutarAlertaPanico() {
 
   } catch (errorEnvio) {
     console.error('❌ Error al enviar alerta:', errorEnvio);
-
-    // Verificar si el error es por falta de internet
-    const sinInternet = !navigator.onLine || errorEnvio.message === 'Failed to fetch';
-
-    if (sinInternet) {
-      // Sin internet → fallback a SMS
-      enviarSMSEmergencia(nombre, direccion, telefono);
-    } else {
-      // Hay internet pero Telegram falló (error de API, credenciales, etc.)
-      mostrarFeedback('❌ Error al enviar por Telegram', 'error');
-      alert('Detalle del error: ' + errorEnvio.message);
-    }
+    // Telegram falló → abrir SMS como respaldo
+    enviarSMSEmergencia(nombre, direccion, telefono);
   }
 
   // Restaurar el botón al estado original
