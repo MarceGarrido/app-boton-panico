@@ -224,34 +224,43 @@ async function ejecutarAlertaPanico() {
   const direccion = localStorage.getItem(CLAVE_DIRECCION) || 'Sin dirección';
   const telefono  = localStorage.getItem(CLAVE_TELEFONO)  || 'No especificado';
 
+  // Paso 1: Intentar obtener GPS (no crítico, puede fallar)
+  let coordenadas = null;
   try {
-    // Intentar obtener coordenadas GPS
-    const coordenadas = await obtenerUbicacion();
-
-    // Armar mensaje CON ubicación GPS
-    const mensaje = armarMensajeConGPS(nombre, direccion, telefono, coordenadas);
-
-    // Enviar a Telegram
-    await enviarATelegram(mensaje);
-
-    // Mostrar feedback de éxito
-    mostrarFeedback('✅ ¡Alerta enviada correctamente!', 'exito');
-
+    coordenadas = await obtenerUbicacion();
   } catch (errorGPS) {
     console.warn('⚠️ GPS no disponible:', errorGPS.message);
+  }
 
-    // Armar mensaje SIN ubicación GPS
-    const mensajeSinGPS = armarMensajeSinGPS(nombre, direccion, telefono);
+  // Paso 2: Armar el mensaje según si tenemos GPS o no
+  const mensaje = coordenadas
+    ? armarMensajeConGPS(nombre, direccion, telefono, coordenadas)
+    : armarMensajeSinGPS(nombre, direccion, telefono);
 
-    try {
-      // Enviar alerta SIN GPS a Telegram
-      await enviarATelegram(mensajeSinGPS);
+  // Paso 3: Intentar enviar por Telegram
+  try {
+    await enviarATelegram(mensaje);
+
+    // Éxito
+    if (coordenadas) {
+      mostrarFeedback('✅ ¡Alerta enviada correctamente!', 'exito');
+    } else {
       mostrarFeedback('⚠️ Alerta enviada (sin ubicación GPS)', 'exito');
+    }
 
-    } catch (errorRed) {
-      console.error('❌ Error al enviar alerta:', errorRed);
-      // Intentar fallback por SMS
+  } catch (errorEnvio) {
+    console.error('❌ Error al enviar alerta:', errorEnvio);
+
+    // Verificar si el error es por falta de internet
+    const sinInternet = !navigator.onLine || errorEnvio.message === 'Failed to fetch';
+
+    if (sinInternet) {
+      // Sin internet → fallback a SMS
       enviarSMSEmergencia(nombre, direccion, telefono);
+    } else {
+      // Hay internet pero Telegram falló (error de API, credenciales, etc.)
+      mostrarFeedback('❌ Error al enviar por Telegram', 'error');
+      alert('Detalle del error: ' + errorEnvio.message);
     }
   }
 
