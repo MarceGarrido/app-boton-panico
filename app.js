@@ -16,9 +16,10 @@ const CLAVE_CHAT_ID   = 'telegramChatId';
 // -----------------------------------------
 //  CONSTANTES DE LA APLICACIÓN
 // -----------------------------------------
-const CLAVE_NOMBRE    = 'nombreUsuario';
-const CLAVE_DIRECCION = 'direccionRegistrada';
-const CLAVE_TELEFONO  = 'telefonoContacto';
+const CLAVE_NOMBRE          = 'nombreUsuario';
+const CLAVE_DIRECCION       = 'direccionRegistrada';
+const CLAVE_TELEFONO        = 'telefonoContacto';
+const CLAVE_SMS_EMERGENCIA  = 'smsEmergencia';
 const DURACION_FEEDBACK = 5000; // 5 segundos para el mensaje de feedback
 const TIMEOUT_GPS = 15000;      // 15 segundos de timeout para GPS
 
@@ -33,6 +34,7 @@ const inputDireccion    = document.getElementById('input-direccion');
 const inputTelefono     = document.getElementById('input-telefono');
 const inputBotToken     = document.getElementById('input-bot-token');
 const inputChatId       = document.getElementById('input-chat-id');
+const inputSmsEmergencia = document.getElementById('input-sms-emergencia');
 const configTelegram    = document.getElementById('config-telegram');
 const btnPanico         = document.getElementById('btn-panico');
 const btnAjustes        = document.getElementById('btn-ajustes');
@@ -96,15 +98,17 @@ function mostrarPantallaRegistro() {
   const telefonoExistente  = localStorage.getItem(CLAVE_TELEFONO);
   const tokenExistente     = localStorage.getItem(CLAVE_BOT_TOKEN);
   const chatIdExistente    = localStorage.getItem(CLAVE_CHAT_ID);
+  const smsExistente       = localStorage.getItem(CLAVE_SMS_EMERGENCIA);
 
-  if (nombreExistente)    inputNombre.value    = nombreExistente;
-  if (direccionExistente) inputDireccion.value = direccionExistente;
-  if (telefonoExistente)  inputTelefono.value  = telefonoExistente;
-  if (tokenExistente)     inputBotToken.value  = tokenExistente;
-  if (chatIdExistente)    inputChatId.value    = chatIdExistente;
+  if (nombreExistente)    inputNombre.value         = nombreExistente;
+  if (direccionExistente) inputDireccion.value      = direccionExistente;
+  if (telefonoExistente)  inputTelefono.value       = telefonoExistente;
+  if (tokenExistente)     inputBotToken.value       = tokenExistente;
+  if (chatIdExistente)    inputChatId.value         = chatIdExistente;
+  if (smsExistente)       inputSmsEmergencia.value  = smsExistente;
 
-  // Si ya hay credenciales de Telegram, abrir el acordeón
-  if (tokenExistente || chatIdExistente) {
+  // Si ya hay credenciales de Telegram o SMS, abrir el acordeón
+  if (tokenExistente || chatIdExistente || smsExistente) {
     configTelegram.setAttribute('open', '');
   }
 
@@ -145,8 +149,9 @@ formulario.addEventListener('submit', (evento) => {
   const nombre    = inputNombre.value.trim();
   const direccion = inputDireccion.value.trim();
   const telefono  = inputTelefono.value.trim();
-  const botToken  = inputBotToken.value.trim();
-  const chatId    = inputChatId.value.trim();
+  const botToken       = inputBotToken.value.trim();
+  const chatId         = inputChatId.value.trim();
+  const smsEmergencia  = inputSmsEmergencia.value.trim();
 
   // Validación básica de nombre, dirección y teléfono
   if (!nombre || !direccion || !telefono) {
@@ -162,8 +167,9 @@ formulario.addEventListener('submit', (evento) => {
   localStorage.setItem(CLAVE_TELEFONO, telefono);
 
   // Guardar credenciales de Telegram (si se proporcionaron)
-  if (botToken) localStorage.setItem(CLAVE_BOT_TOKEN, botToken);
-  if (chatId)   localStorage.setItem(CLAVE_CHAT_ID, chatId);
+  if (botToken)      localStorage.setItem(CLAVE_BOT_TOKEN, botToken);
+  if (chatId)        localStorage.setItem(CLAVE_CHAT_ID, chatId);
+  if (smsEmergencia) localStorage.setItem(CLAVE_SMS_EMERGENCIA, smsEmergencia);
 
   // Ir a la pantalla principal
   mostrarPantallaPrincipal(nombre, direccion, telefono);
@@ -244,8 +250,8 @@ async function ejecutarAlertaPanico() {
 
     } catch (errorRed) {
       console.error('❌ Error al enviar alerta:', errorRed);
-      mostrarFeedback('❌ Error de conexión', 'error');
-      alert('Detalle del error: ' + errorRed.message);
+      // Intentar fallback por SMS
+      enviarSMSEmergencia(nombre, direccion, telefono);
     }
   }
 
@@ -370,6 +376,41 @@ function obtenerFechaHoraFormateada() {
     second: '2-digit',
     hour12: false
   });
+}
+
+// -----------------------------------------
+//  FALLBACK: SMS DE EMERGENCIA
+//  Se activa cuando Telegram falla (sin internet).
+//  Abre la app de Mensajes con el texto prellenado.
+// -----------------------------------------
+
+/**
+ * Abre la aplicación de SMS nativa con un mensaje de emergencia prellenado.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} direccion - Dirección del usuario.
+ * @param {string} telefono - Teléfono del usuario.
+ */
+function enviarSMSEmergencia(nombre, direccion, telefono) {
+  const numeroSMS = localStorage.getItem(CLAVE_SMS_EMERGENCIA);
+
+  if (!numeroSMS) {
+    mostrarFeedback('❌ Sin internet y sin nº SMS configurado', 'error');
+    alert('No se pudo enviar la alerta por Telegram (sin conexión) y no hay un número de SMS de emergencia configurado. Configuralo en Ajustes > Avanzado.');
+    return;
+  }
+
+  // Armar mensaje de texto plano (sin Markdown, los SMS no lo soportan)
+  const hora = obtenerFechaHoraFormateada();
+  const textoSMS = `🚨 ALERTA DE PÁNICO 🚨\n\nNombre: ${nombre}\nDirección: ${direccion}\nTeléfono: ${telefono}\nHora: ${hora}\n\nSe necesita verificar la situación de inmediato.`;
+
+  // Codificar el texto para la URL del SMS
+  const textoCodificado = encodeURIComponent(textoSMS);
+
+  // Abrir la app de SMS nativa del celular
+  // El formato sms: funciona tanto en Android como en iOS
+  window.location.href = `sms:${numeroSMS}?body=${textoCodificado}`;
+
+  mostrarFeedback('📱 Abriendo SMS de emergencia...', 'exito');
 }
 
 // -----------------------------------------
