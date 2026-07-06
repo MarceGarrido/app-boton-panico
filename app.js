@@ -250,14 +250,8 @@ async function ejecutarAlertaPanico() {
 
   } catch (errorEnvio) {
     console.error('❌ Error al enviar alerta:', errorEnvio);
-
-    // Diagnóstico: mostrar qué falló exactamente
-    const botToken = localStorage.getItem(CLAVE_BOT_TOKEN);
-    const chatId   = localStorage.getItem(CLAVE_CHAT_ID);
-    const diagnostico = `ERROR TELEGRAM:\n${errorEnvio.message}\n\nToken guardado: ${botToken ? 'Sí (' + botToken.substring(0,6) + '...)' : 'NO'}\nChat ID guardado: ${chatId ? 'Sí' : 'NO'}\nInternet: ${navigator.onLine ? 'Sí' : 'No'}`;
-    alert(diagnostico);
-
-    // Telegram falló → abrir SMS como respaldo
+    // Telegram falló (ya sea por internet u otro error no auto-corregible)
+    // → abrir SMS como respaldo
     enviarSMSEmergencia(nombre, direccion, telefono);
   }
 
@@ -457,6 +451,33 @@ async function enviarATelegram(mensaje) {
   if (!respuesta.ok) {
     const errorData = await respuesta.json().catch(() => ({}));
     console.error('❌ Error de Telegram API:', errorData);
+    
+    // Auto-corregir migración a supergrupo (ej: cuando se agregan administradores o se cambian permisos)
+    if (errorData.parameters && errorData.parameters.migrate_to_chat_id) {
+      const nuevoChatId = errorData.parameters.migrate_to_chat_id;
+      console.warn(`🔄 Grupo migrado a supergrupo. Actualizando Chat ID a ${nuevoChatId}`);
+      localStorage.setItem(CLAVE_CHAT_ID, nuevoChatId);
+
+      // Reintentar el envío con el nuevo ID
+      const nuevaRespuesta = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: nuevoChatId,
+          text: mensaje,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: false
+        })
+      });
+
+      if (nuevaRespuesta.ok) {
+        const nuevaData = await nuevaRespuesta.json();
+        console.log('✅ Mensaje enviado a Telegram (reintento post-migración):', nuevaData);
+        // Ocultar el error ya que se solucionó automáticamente
+        return nuevaData; 
+      }
+    }
+
     throw new Error(`Telegram error ${respuesta.status}: ${errorData.description || 'Desconocido'}`);
   }
 
