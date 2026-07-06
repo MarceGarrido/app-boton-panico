@@ -250,6 +250,13 @@ async function ejecutarAlertaPanico() {
 
   } catch (errorEnvio) {
     console.error('❌ Error al enviar alerta:', errorEnvio);
+
+    // Diagnóstico: mostrar qué falló exactamente
+    const botToken = localStorage.getItem(CLAVE_BOT_TOKEN);
+    const chatId   = localStorage.getItem(CLAVE_CHAT_ID);
+    const diagnostico = `ERROR TELEGRAM:\n${errorEnvio.message}\n\nToken guardado: ${botToken ? 'Sí (' + botToken.substring(0,6) + '...)' : 'NO'}\nChat ID guardado: ${chatId ? 'Sí' : 'NO'}\nInternet: ${navigator.onLine ? 'Sí' : 'No'}`;
+    alert(diagnostico);
+
     // Telegram falló → abrir SMS como respaldo
     enviarSMSEmergencia(nombre, direccion, telefono);
   }
