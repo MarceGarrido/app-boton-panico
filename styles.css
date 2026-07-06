@@ -82,7 +82,9 @@ body {
 }
 
 /* Prevenir zoom en inputs en iOS */
-input, select, textarea {
+input,
+select,
+textarea {
   font-size: 16px;
 }
 
@@ -122,6 +124,7 @@ input, select, textarea {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -415,8 +418,15 @@ input, select, textarea {
 }
 
 @keyframes parpadeo {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* Botón de ajustes */
@@ -501,10 +511,13 @@ input, select, textarea {
 }
 
 @keyframes pulso-anillo {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     border-color: rgba(255, 45, 85, 0.1);
   }
+
   50% {
     transform: scale(1.03);
     border-color: rgba(255, 45, 85, 0.2);
@@ -595,15 +608,23 @@ input, select, textarea {
 
 .btn-panico-icono {
   opacity: 0.9;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.btn-panico-numero {
+  font-family: var(--fuente-principal);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  opacity: 0.95;
 }
 
 .btn-panico-texto {
   font-family: var(--fuente-principal);
-  font-size: 2.2rem;
+  font-size: 1.1rem;
   font-weight: 900;
-  letter-spacing: 0.15em;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-panico-subtexto {
@@ -625,13 +646,25 @@ input, select, textarea {
 }
 
 .btn-panico.enviando .btn-panico-texto {
-  font-size: 1.2rem;
-  letter-spacing: 0.05em;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+.btn-panico.enviando .btn-panico-numero {
+  display: none;
+  /* Ocultar el 911 mientras envía para dar más espacio */
 }
 
 @keyframes pulsando {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(0.96); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.96);
+  }
 }
 
 /* ============================================= */
@@ -652,6 +685,7 @@ input, select, textarea {
     opacity: 0;
     transform: translateY(100%);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -726,6 +760,7 @@ input, select, textarea {
     height: 100px;
     opacity: 0.6;
   }
+
   100% {
     width: 200vmax;
     height: 200vmax;
@@ -753,6 +788,7 @@ input, select, textarea {
 
 /* Respetar preferencia de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

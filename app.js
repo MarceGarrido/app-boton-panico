@@ -257,7 +257,7 @@ async function ejecutarAlertaPanico() {
 
   // Restaurar el botón al estado original
   btnPanico.classList.remove('enviando');
-  cambiarTextoBoton('SOS', 'PRESIONÁ PARA ALERTAR');
+  cambiarTextoBoton('EMERGENCIA', 'PRESIONE AQUÍ');
 }
 
 // -----------------------------------------
