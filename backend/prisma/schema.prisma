@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  nombre    String
+  direccion String
+  telefono  String
+  lat       Float?
+  lon       Float?
+  estado    String   @default("NUEVA") // NUEVA, ATENDIDA, FALSA_ALARMA
+  nota      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

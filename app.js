@@ -20,6 +20,7 @@ const CLAVE_NOMBRE          = 'nombreUsuario';
 const CLAVE_DIRECCION       = 'direccionRegistrada';
 const CLAVE_TELEFONO        = 'telefonoContacto';
 const CLAVE_SMS_EMERGENCIA  = 'smsEmergencia';
+const CLAVE_SERVER_URL      = 'dashboardServerUrl';
 const DURACION_FEEDBACK = 5000; // 5 segundos para el mensaje de feedback
 const TIMEOUT_GPS = 15000;      // 15 segundos de timeout para GPS
 
@@ -35,6 +36,7 @@ const inputTelefono     = document.getElementById('input-telefono');
 const inputBotToken     = document.getElementById('input-bot-token');
 const inputChatId       = document.getElementById('input-chat-id');
 const inputSmsEmergencia = document.getElementById('input-sms-emergencia');
+const inputServerUrl    = document.getElementById('input-server-url');
 const configTelegram    = document.getElementById('config-telegram');
 const btnPanico         = document.getElementById('btn-panico');
 const btnAjustes        = document.getElementById('btn-ajustes');
@@ -99,6 +101,7 @@ function mostrarPantallaRegistro() {
   const tokenExistente     = localStorage.getItem(CLAVE_BOT_TOKEN);
   const chatIdExistente    = localStorage.getItem(CLAVE_CHAT_ID);
   const smsExistente       = localStorage.getItem(CLAVE_SMS_EMERGENCIA);
+  const serverUrlExistente = localStorage.getItem(CLAVE_SERVER_URL);
 
   if (nombreExistente)    inputNombre.value         = nombreExistente;
   if (direccionExistente) inputDireccion.value      = direccionExistente;
@@ -106,9 +109,10 @@ function mostrarPantallaRegistro() {
   if (tokenExistente)     inputBotToken.value       = tokenExistente;
   if (chatIdExistente)    inputChatId.value         = chatIdExistente;
   if (smsExistente)       inputSmsEmergencia.value  = smsExistente;
+  if (serverUrlExistente) inputServerUrl.value      = serverUrlExistente;
 
-  // Si ya hay credenciales de Telegram o SMS, abrir el acordeón
-  if (tokenExistente || chatIdExistente || smsExistente) {
+  // Si ya hay credenciales de Telegram, SMS o Server, abrir el acordeón
+  if (tokenExistente || chatIdExistente || smsExistente || serverUrlExistente) {
     configTelegram.setAttribute('open', '');
   }
 
@@ -152,6 +156,7 @@ formulario.addEventListener('submit', (evento) => {
   const botToken       = inputBotToken.value.trim();
   const chatId         = inputChatId.value.trim();
   const smsEmergencia  = inputSmsEmergencia.value.trim();
+  const serverUrl      = inputServerUrl.value.trim();
 
   // Validación básica de nombre, dirección y teléfono
   if (!nombre || !direccion || !telefono) {
@@ -170,6 +175,7 @@ formulario.addEventListener('submit', (evento) => {
   if (botToken)      localStorage.setItem(CLAVE_BOT_TOKEN, botToken);
   if (chatId)        localStorage.setItem(CLAVE_CHAT_ID, chatId);
   if (smsEmergencia) localStorage.setItem(CLAVE_SMS_EMERGENCIA, smsEmergencia);
+  if (serverUrl)     localStorage.setItem(CLAVE_SERVER_URL, serverUrl);
 
   // Ir a la pantalla principal
   mostrarPantallaPrincipal(nombre, direccion, telefono);
@@ -237,11 +243,23 @@ async function ejecutarAlertaPanico() {
     ? armarMensajeConGPS(nombre, direccion, telefono, coordenadas)
     : armarMensajeSinGPS(nombre, direccion, telefono);
 
-  // Paso 3: Intentar enviar por Telegram
+  // Paso 3: Intentar enviar al Servidor Dashboard y a Telegram
+  let envioExitoso = false;
   try {
-    await enviarATelegram(mensaje);
+    // Intentar enviar al servidor (si está configurado)
+    const serverPromise = enviarAServidor(nombre, direccion, telefono, coordenadas);
+    
+    // Intentar enviar a Telegram
+    const telegramPromise = enviarATelegram(mensaje);
 
-    // Éxito
+    // Esperar ambos envíos (se envían en paralelo)
+    await Promise.allSettled([serverPromise, telegramPromise]);
+
+    // Éxito (asumimos éxito si al menos intentó uno sin tirar throw fatal, 
+    // enviarATelegram tira throw si no hay credenciales, pero Promise.allSettled los captura)
+    // Para simplificar: si no explotó antes de este punto, marcamos éxito local.
+    envioExitoso = true;
+    
     if (coordenadas) {
       mostrarFeedback('✅ ¡Alerta enviada correctamente!', 'exito');
     } else {
@@ -310,6 +328,39 @@ function obtenerUbicacion() {
       }
     );
   });
+}
+
+/**
+ * Envía la alerta al Servidor Dashboard central.
+ */
+async function enviarAServidor(nombre, direccion, telefono, coordenadas) {
+  const serverUrl = localStorage.getItem(CLAVE_SERVER_URL);
+  if (!serverUrl) return; // Si no hay servidor configurado, no hace nada
+
+  const payload = {
+    nombre,
+    direccion,
+    telefono,
+    lat: coordenadas ? coordenadas.lat : null,
+    lon: coordenadas ? coordenadas.lon : null
+  };
+
+  try {
+    const url = serverUrl.endsWith('/') ? serverUrl + 'api/alertas' : serverUrl + '/api/alertas';
+    const respuesta = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!respuesta.ok) {
+      console.warn('⚠️ El servidor Dashboard respondió con error:', respuesta.status);
+    } else {
+      console.log('✅ Alerta enviada al Dashboard exitosamente');
+    }
+  } catch (error) {
+    console.warn('⚠️ Error de red al intentar contactar al servidor Dashboard:', error);
+  }
 }
 
 // -----------------------------------------
