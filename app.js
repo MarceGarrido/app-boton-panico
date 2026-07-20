@@ -1,5 +1,5 @@
 // =============================================
-//  BOTÓN DE PÁNICO - Lógica Principal (app.js)
+//  BAIP - Lógica Principal (app.js)
 //  Aplicación PWA de emergencia para comerciantes
 //  y adultos mayores.
 // =============================================
@@ -327,7 +327,7 @@ function obtenerUbicacion() {
 function armarMensajeConGPS(nombre, direccion, telefono, coordenadas) {
   const mapUrl = `https://www.google.com/maps?q=${coordenadas.lat},${coordenadas.lon}`;
   
-  return `🚨 *¡ALERTA DE PÁNICO!* 🚨
+  return `🚨 *¡ALERTA BAIP!* 🚨
 
 👤 *Comercio / Nombre:* ${nombre}
 📍 *Dirección:* ${direccion}
@@ -346,7 +346,7 @@ _Por favor, verificar la situación de inmediato._`;
  * Aclara que el GPS no estaba disponible.
  */
 function armarMensajeSinGPS(nombre, direccion, telefono) {
-  return `🚨🚨🚨 *ALERTA DE PÁNICO* 🚨🚨🚨
+  return `🚨🚨🚨 *ALERTA BAIP* 🚨🚨🚨
 
 ⚠️ *Se ha activado una alerta de emergencia*
 
@@ -401,7 +401,7 @@ function enviarSMSEmergencia(nombre, direccion, telefono) {
 
   // Armar mensaje de texto plano (sin Markdown, los SMS no lo soportan)
   const hora = obtenerFechaHoraFormateada();
-  const textoSMS = `🚨 ALERTA DE PÁNICO 🚨\n\nNombre: ${nombre}\nDirección: ${direccion}\nTeléfono: ${telefono}\nHora: ${hora}\n\nSe necesita verificar la situación de inmediato.`;
+  const textoSMS = `🚨 ALERTA BAIP 🚨\n\nNombre: ${nombre}\nDirección: ${direccion}\nTeléfono: ${telefono}\nHora: ${hora}\n\nSe necesita verificar la situación de inmediato.`;
 
   // Codificar el texto para la URL del SMS
   const textoCodificado = encodeURIComponent(textoSMS);

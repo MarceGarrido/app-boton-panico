@@ -1,18 +1,18 @@
 // =============================================
-//  SERVICE WORKER - Botón de Pánico PWA
+//  SERVICE WORKER - BAIP PWA
 //  Caché de recursos para funcionamiento offline
 //  y experiencia de instalación nativa.
 // =============================================
 
 // Nombre de la caché (cambiar versión para forzar actualización)
-const CACHE_NAME = 'boton-panico-v14';
+const CACHE_NAME = 'baip-v15';
 
 // Recursos a cachear para uso offline
 const RECURSOS_A_CACHEAR = [
   './',
   './index.html',
-  './styles.css?v=14',
-  './app.js?v=14',
+  './styles.css?v=15',
+  './app.js?v=15',
   './manifest.json'
 ];
 

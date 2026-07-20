@@ -1,6 +1,6 @@
 {
-  "name": "Botón de Pánico - Emergencia",
-  "short_name": "Pánico",
+  "name": "BAIP - Emergencia",
+  "short_name": "BAIP",
   "description": "Aplicación de emergencia para comerciantes y adultos mayores. Envía alertas directas a la central policial vía Telegram.",
   "start_url": "./index.html",
   "display": "standalone",
