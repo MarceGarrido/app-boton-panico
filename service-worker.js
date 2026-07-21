@@ -5,14 +5,14 @@
 // =============================================
 
 // Nombre de la caché (cambiar versión para forzar actualización)
-const CACHE_NAME = 'baip-v16';
+const CACHE_NAME = 'baip-v17';
 
 // Recursos a cachear para uso offline
 const RECURSOS_A_CACHEAR = [
   './',
   './index.html',
-  './styles.css?v=16',
-  './app.js?v=16',
+  './styles.css?v=17',
+  './app.js?v=17',
   './manifest.json'
 ];
 
